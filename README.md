@@ -1,4 +1,4 @@
-# jenkins-blackduck-codescan
+# Jenkins Automated Pipeline for Blackduck Code scan
 This is a Jenkins Pipeline script for automated blackduck code scan and notification.
 
 
