@@ -1,0 +1,107 @@
+ 
+def ENVIRONMENT_STR = ""
+def PROJECT_STR = ""
+
+pipeline {
+    // trigger job at everyday
+     triggers {
+     pollSCM('H H * * *')
+    }
+
+    agent any
+    parameters {
+        booleanParam(name: 'DEV', defaultValue: true, description: "Select Dev build option")
+        booleanParam(name: 'PROD', defaultValue: false, description: "Select Prod build option")
+        string(name: 'EMAIL', defaultValue: 'Ashneil.Singh@anz.com;HEMALATHA.RACHABATHUNI@anz.com;Pavithra.MuddenahalliPrabhakaraReddy@anz.com', description: 'Email notification')
+    }
+
+    environment {
+        PROJECT_PATH = "${env.WORKSPACE}"
+    }
+
+    options { disableConcurrentBuilds() }
+
+    stages {
+        stage('Clear dir') {
+            steps {
+                deleteDir()
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                   checkout scm                          
+                }
+        }
+        
+        stage('Scan Code') {
+            steps {
+                script {
+                env.GIT_BRANCH = getGitBranchName().replaceAll('[\n\r]', '')
+                env.GIT_BRANCH_URL = scm.userRemoteConfigs[0].url
+                String PROJECT_DETAIL = "${env.JOB_NAME}"
+                PROJECT_STR = PROJECT_DETAIL.replaceAll("/.*", "");
+                            def output = powershell(returnStdout: true, script:'''
+                                        $VAR_A = Import-Csv -Path "${env:JENKINS_COMMON}\\RatesRepository\\RatesRepository.csv"                   
+                                            "$(($VAR_A).MainBranch)"
+                                            "$(($VAR_A).ProjectName)"
+                                            "$(($VAR_A).BuildVersion)" 
+                                        
+                                        $VAR_A | Select-Object *, @{n="Blackduck";e={"${env:JOB_BASE_NAME}"}} | Export-CSV "${env:JENKINS_COMMON}\\RatesRepository\\RatesRepository.csv" -NoTypeInformation
+                            ''')
+                                        
+                            env.MAIN_BRANCH = output.tokenize('\n')[0].trim()
+                            env.PROJECT_NAME = output.tokenize('\n')[1].trim()
+                            env.BUILD_VERSION = output.tokenize('\n')[2].trim()
+                    
+                        if(params.DEV) {
+                            ENVIRONMENT_STR = 'DEV'
+                        } else if(params.PROD) {
+                            ENVIRONMENT_STR = "_${env.BUILD_VERSION}"
+                        }
+
+
+                }
+            
+            powershell returnStatus: true, script: ''' mkdir "${env:WORKSPACE}\\codescan\\logs" '''
+
+                withCredentials([string(credentialsId: "blackduck-api-token", variable: 'BLACKDUCK_API_TOKEN')]) {
+                    bat """ 
+                    detect.cmd \
+                    --spring.config.location=file:"${PROJECT_PATH}\\codescan\\blackduck\\blackduck.yml" \
+                            --detect.project.name="MeRV Rates Repository WPF" \
+                            --detect.project.version.name="${PROJECT_STR}_${ENVIRONMENT_STR}" \
+                            --detect.code.location.name="${PROJECT_STR}_${ENVIRONMENT_STR}" \
+                            --blackduck.url="https://sca.apps.anz/" \
+                            --blackduck.api.token="${BLACKDUCK_API_TOKEN}" \
+                            --detect.source.path="${PROJECT_PATH}" > "${env.WORKSPACE}\\codescan\\logs\\${PROJECT_STR}_${env.BUILD_NUMBER}.log"
+                    """
+                }
+            }    
+        }
+    }
+    
+    post {
+        always {
+            emailext (
+                to: "${params.EMAIL}",
+                from: "MarketRisk-Jenkins@anz.com",
+                subject: "JENKINS BUILD - ${PROJECT_STR}: ${ENVIRONMENT_STR} - ${currentBuild.currentResult}",
+                attachmentsPattern: "codescan/**/logs/*",
+                body: """<p><h3><u> JENKINS BUILD DETAIL - ${PROJECT_STR}_${env.BUILD_NUMBER} </u></h3><br>
+                        <b>JOB: </b> ${env.JOB_NAME} <br><br>
+                        <b>BUILD STATUS: </b> ${currentBuild.currentResult} <br><br>
+                        <b>DURATION: </b> ${currentBuild.durationString} <br><br>
+                        <b>GIT BRANCH: </b> <a href='${env.GIT_BRANCH_URL}'>${env.GIT_BRANCH}</a> <br><br>
+                        <b>CODESCAN RESULT: </b> Refer attached blackduck and Checkmarx codescan logs <br>
+                        <br>Check console output at <a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a></p>""",
+            )  
+            
+        }
+    }
+}
+def getGitBranchName() {
+    return scm.branches[0].name
+} 
+                
+            

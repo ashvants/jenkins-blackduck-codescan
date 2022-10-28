@@ -1,0 +1,22 @@
+blackduck.url: https://sca.apps.mydomain/
+
+detect:
+  project.name: "MeRV Rates Repository WPF"
+
+  # Only works on detect version >= 7
+  excluded.directories: "**/dist,**/helm,**/node_modules,docker"
+  # For detect version < 7
+  blackduck.signature.scanner.exclusion.name.patterns: dist,helm,node_modules,build-agents
+
+  project.codelocation.unmap: true
+
+  detector.search.depth: 2
+
+  # project version to clone from
+  # clone.project.version.name: default
+
+  # exit non-zero on all severities of policy violation
+  # policy.check.fail.on.severities: BLOCKER
+
+  # Wait up to 5 hour to get scan results (yikes)
+  # timeout: 18000
