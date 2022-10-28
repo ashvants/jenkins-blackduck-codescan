@@ -6,7 +6,7 @@ This is a Jenkins Pipeline script for automated blackduck code scan and notifica
 
 [Jenkins](https://www.jenkins.io/) is a an open source automation server mainly used to implement Continuous Integration (CI) and Continuous Delivery (CD) for any development project. CI/CD, a key component of a DevOps strategy, allows you to develop the application lifecycle while maintaining quality by automating tasks like building, testing, code scan / code compliance, end-to-end delivery.
 
-Black Duck (https://community.synopsys.com/s/article/Black-Duck-A-Technical-Introduction) allows you to discover the open source in your code and map discovered components to known vulnerabilities. This tutorial is show how Black Duck scan can be integrated into your dev-ops process for a jenkins pipeline and to monitor your projects in the background and raise alert you as new threats arise.
+Blackduck (https://community.synopsys.com/s/article/Black-Duck-A-Technical-Introduction) allows you to discover the open source in your code and map discovered components to known vulnerabilities. This tutorial is show how Black Duck scan can be integrated into your dev-ops process for a jenkins pipeline and to monitor your projects in the background and raise alert you as new threats arise.
 
 [Jenkins Pipeline as Code](https://www.jenkins.io/solutions/pipeline/) with the use of Pipeline plugin, jenkins allows to implement a project’s entire build/test/deploy pipeline in a Jenkinsfile that stores alongside the code repository, the pipeline as another piece of code checked into source control.
 
@@ -39,8 +39,6 @@ If you use either dev or prod environments then you can create custom parameters
         string(name: 'EMAIL', defaultValue: 'emailaddress.gmail.com', description: 'Email notification')
     }
 ```
-
-[Enterprise level](https://docs.github.com/en/enterprise-server@2.22/actions/hosting-your-own-runners/adding-self-hosted-runners#adding-a-self-hosted-runner-to-an-enterprise) runners are not working yet as there's no API definition for those.
 
 ## Pipeline Stages 
 
