@@ -42,12 +42,12 @@ pipeline {
                 String PROJECT_DETAIL = "${env.JOB_NAME}"
                 PROJECT_STR = PROJECT_DETAIL.replaceAll("/.*", "");
                             def output = powershell(returnStdout: true, script:'''
-                                        $VAR_A = Import-Csv -Path "${env:JENKINS_COMMON}\\RatesRepository\\RatesRepository.csv"                   
+                                        $VAR_A = Import-Csv -Path "${env:JENKINS_COMMON}\\csvlocation\\csvfile.csv"                   
                                             "$(($VAR_A).MainBranch)"
                                             "$(($VAR_A).ProjectName)"
                                             "$(($VAR_A).BuildVersion)" 
                                         
-                                        $VAR_A | Select-Object *, @{n="Blackduck";e={"${env:JOB_BASE_NAME}"}} | Export-CSV "${env:JENKINS_COMMON}\\RatesRepository\\RatesRepository.csv" -NoTypeInformation
+                                        $VAR_A | Select-Object *, @{n="Blackduck";e={"${env:JOB_BASE_NAME}"}} | Export-CSV "${env:JENKINS_COMMON}\\csvlocation\\csvfile.csv -NoTypeInformation
                             ''')
                                         
                             env.MAIN_BRANCH = output.tokenize('\n')[0].trim()
@@ -69,10 +69,10 @@ pipeline {
                     bat """ 
                     detect.cmd \
                     --spring.config.location=file:"${PROJECT_PATH}\\codescan\\blackduck\\blackduck.yml" \
-                            --detect.project.name="MeRV Rates Repository WPF" \
+                            --detect.project.name="Project Name" \
                             --detect.project.version.name="${PROJECT_STR}_${ENVIRONMENT_STR}" \
                             --detect.code.location.name="${PROJECT_STR}_${ENVIRONMENT_STR}" \
-                            --blackduck.url="https://sca.apps.anz/" \
+                            --blackduck.url="https://sca.apps.mydomain/" \
                             --blackduck.api.token="${BLACKDUCK_API_TOKEN}" \
                             --detect.source.path="${PROJECT_PATH}" > "${env.WORKSPACE}\\codescan\\logs\\${PROJECT_STR}_${env.BUILD_NUMBER}.log"
                     """
@@ -85,7 +85,7 @@ pipeline {
         always {
             emailext (
                 to: "${params.EMAIL}",
-                from: "MarketRisk-Jenkins@anz.com",
+                from: "MyJenkins@mydomain.com",
                 subject: "JENKINS BUILD - ${PROJECT_STR}: ${ENVIRONMENT_STR} - ${currentBuild.currentResult}",
                 attachmentsPattern: "codescan/**/logs/*",
                 body: """<p><h3><u> JENKINS BUILD DETAIL - ${PROJECT_STR}_${env.BUILD_NUMBER} </u></h3><br>
