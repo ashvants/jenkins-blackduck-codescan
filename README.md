@@ -13,7 +13,7 @@ Blackduck (https://community.synopsys.com/s/article/Black-Duck-A-Technical-Intro
 
 ## Guide
 
-- This is configured as a seperate pipeline since we had to run this scan on a daily basis. 
+- This is configured as a seperate pipeline since we run this scan on a daily basis. 
 - This can be integrated in the normal jenkinsFile pipeline script as well, but just to note the requirments as if you don't want to trigger application builds everyday or if you don't need to fail the builds based on the scan results then it is best to keep this a seperate pipeline.
 
 [Jenkins Cron job Syntax](https://www.jenkins.io/doc/book/pipeline/syntax/cron-syntax)
